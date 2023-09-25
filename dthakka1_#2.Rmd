@@ -1,0 +1,117 @@
+---
+title: "Linear Programming"
+author: "Dutt Thakkar"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Linear Programming Problem
+
+# Formulating LP problem and writing constraints.
+# *Objective function*
+
+# Max: 420(X1+Y1+Z1)+360(X2+Y2+Z2)+300(X3+Y3+Z3);
+
+# *Plant Production Constraint*
+
+# X1+X2+X3 <= 750;
+# Y1+Y2+Y3 <= 900;
+# Z1+Z2+Z3 <= 450;
+
+# *In-process Storage Constraint*
+
+# 20X1+15X2+12X3 <= 13000;
+# 20Y1+15Y2+12Y3 <= 12000;
+# 20Z1+15Z2+12Z3 <= 5000;
+
+# *Sales Constraint*
+
+# X1+Y1+Z1 <= 900;
+# X2+Y2+Z2 <= 1200;
+# X3+Y3+Z3 <= 750;
+
+# *Same Percentage Constraint* 
+
+# (1/750)*(X1+X2+X3)-(1/900)*(Y1+Y2+Y3)=0;
+# (1/750)*(X1+X2+X3)-(1/450)*(Z1+Z2+Z3)=0;
+
+# Installing and loading the lpsolve package
+
+```{r}
+library(lpSolve)
+```
+
+# Coefficients of the objective function
+
+```{r}
+objective_c <- c(420, 360, 300, 420, 360, 300, 420, 360, 300)
+```
+
+# Setting the inequality constraint matrix
+
+```{r}
+const_mat <- matrix(c
+                (1, 0, 0, 1, 0, 0, 1, 0, 0,
+                 0, 1, 0, 0, 1, 0, 0, 1, 0,
+                 0, 0, 1, 0, 0, 1, 0, 0, 1,
+                 1, 1, 1, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 1, 1, 1, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 1, 1, 1,
+                 20, 15, 12, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 20, 15, 12, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 20, 15, 12,
+                 900, 900, 900, -750, -750, -750, 0, 0, 0,
+                 0, 0, 0, 450, 450, 450, -900, -900, -900,
+                 450, 450, 450, 0, 0, 0, -750, -750, -750),
+               nrow=12,
+               byrow=TRUE)
+```
+
+# Directions of constraints 
+
+```{r}
+const_dir <- c("<=","<=","<=","<=","<=","<=","<=","<=","<=","=","=","=")
+```
+
+# Right hand side of constraints 
+
+```{r}
+const_rhs <- c(900,1200,750,750,900,450,13000,12000,5000,0,0,0)
+```
+
+# Solving LP problem
+
+```{r}
+Z = lp("max", objective_c, const_mat, const_dir, const_rhs)
+```
+
+# Printing variable values
+
+```{r}
+cat("Optimal Solution (X1, X2, X3, Y1, Y2, Y3, Z1, Z2, Z3):\n", Z$solution, "\n")
+cat("Optimal Profit (P):\n", Z$objval, "\n")
+```
+# Optimal Profit = 696000
+
+# Number of large, medium, and small sized products to be produced at plant 1
+# X1 = 516.6667
+# X2 = 177.7778
+# X3 = 0
+
+# Number of large, medium, and small sized products to be produced at plant 2
+# Y1 = 0
+# Y2 = 666.6667
+# Y3 = 166.6667
+
+# Number of large, medium, and small sized products to be produced at plant 3
+# Z1 = 0
+# Z2 = 0
+# Z3 = 416.6667
+
+
