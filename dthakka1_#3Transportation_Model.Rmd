@@ -1,0 +1,122 @@
+---
+title: "Transportation Model"
+author: "Dutt Thakkar"
+date: "2023-10-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Question: Heart Start produces automated external defibrillators (AEDs) in each of two different plants (A and B). The unit production costs and monthly production capacity of the two plants are indicated in the table below. The AEDs are sold through three wholesalers. The shipping cost from each plant to the warehouse of each wholesaler along with the monthly demand from each wholesaler are also indicated in the table. How many AEDs should be produced in each plant, and how should they be distributed to each of the three wholesaler warehouses so as to minimize the combined cost of production and shipping?
+
+#Loading required libraries
+
+```{r}
+library(lpSolve)
+library(lpSolveAPI)
+library(kableExtra)
+```
+
+# Creating table to display production costs, shipping costs, demand and supply constraints.
+
+```{r}
+table<-matrix(c("$22","$14","$30","$600",100,
+ "$16","$20","$24","$625",120,
+ 80,60,70,"-","-"),ncol = 5,byrow = TRUE)
+colnames(table)<-c("Warehouse 1","Warehouse 2","Warehouse 3","Production Cost","Production Capacity")
+rownames(table)<-c("Plant A","Plant B","Monthly Demand")
+table<-as.table(table)
+```
+
+```{r}
+table%>%
+ kable()%>%
+ kable_classic()%>%
+ column_spec(2,border_left = TRUE) %>% 
+ column_spec(6,border_left = TRUE)%>%
+ row_spec(3,extra_css = "border-bottom:dotted;")
+```
+
+#As displayed in the table, it shows that the demand is less than the production capacity making it an unbalanced transportation problem. Hence, it is required to add a dummy warehouse. By this way the demand and supply would be equal making it a balanced problem. 
+
+# Creating a table with Dummy Warehouse
+
+```{r}
+table<-matrix(c("$22","$14","$30","$0", "$600",100,
+ "$16","$20","$24","$0", "$625",120,
+ 80,60,70,10,"-","220"),ncol = 6,byrow = TRUE)
+colnames(table)<-c("Warehouse 1","Warehouse 2","Warehouse 3","Dummy Warehouse","Production Cost","Production Capacity")
+rownames(table)<-c("Plant A","Plant B","Monthly Demand")
+table<-as.table(table)
+```
+
+```{r}
+table%>%
+ kable()%>%
+ kable_classic()%>%
+ column_spec(2,border_left = TRUE) %>% 
+ column_spec(6,border_left = TRUE)%>%
+ row_spec(3,extra_css = "border-bottom:dotted;")
+```
+
+# Formulating the transportation problem
+
+#The Objective Function is to Minimize the Transportation Cost
+
+$$\ Minimum\ Transportation\ Cost = 622X_{11}+614X_{12}+630X_{13}+0X_{14}+\\ \hspace{2cm}641X_{21}+645X_{22}+649X_{23}+0X_{24}\\$$
+#Supply Constraints
+
+#For Plant A:
+$$ X_{11}+X_{12}+X_{13}+X_{14}\le 100$$
+# For Plant B:
+$$ X_{11}+X_{12}+X_{13}+X_{14}\le 120$$
+#Demand Constraints
+
+#Warehouse 1:
+$$X_{11}+X_{21}+X_{31}\ge 80$$
+#Warehouse 2:
+$$X_{12}+X_{22}+X_{32}\ge 60$$
+#Warehouse 3:
+$$X_{13}+X_{23}+X_{33}\ge 70$$
+#Non-negativity constraint:
+$$X_{ij}\ge 0 \hspace{.2cm} where \hspace{.2cm} i = 1,2 \hspace{.2cm} and \hspace{.2cm} j =1,2,3,4$$
+
+# Solving the transportation problem
+
+```{r}
+Trans_mat<-matrix(c(622,614,630,0,
+                    641,645,649,0)
+,ncol = 4,byrow = TRUE)
+Trans_mat
+```
+
+```{r}
+#Assigning the row signs and row values
+
+row.signs <- rep("=",2)
+row.rhs <- c(100,120)
+
+#Assigning the column signs and column values
+
+col.signs <- rep("=",4)
+col.rhs <- c(80,60,70,10)
+
+#Solving the problem
+
+lptrans <- lp.transport(Trans_mat,"min", row.signs,row.rhs,col.signs,col.rhs)
+
+#Finding Solutions
+
+lptrans$solution
+
+#Finding the minimum transportation cost
+
+lptrans$objval
+```
+#The solution shows that Plant A should send 60 units to Warehouse 2, 40 units to Warehouse 3, and 0 units to the Dummy Warehouse.
+#Plant B should send 80 units to Warehouse 1, 0 units to Warehouse 2, 30 units to the Warehouse 3, and 10 units to the Dummy Warehouse.
+
+#The minimum transportation cost, which is the combined cost of production and shipping is $132790
+#This determines how many AEDs to produce at each plant and how to distribute them to minimize costs, ensuring all demand is met while respecting capacity constraints.
