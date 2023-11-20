@@ -1,0 +1,82 @@
+---
+title: "Integer_Programming"
+author: "Dutt Thakkar"
+date: "2023-11-16"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(lpSolveAPI)
+```
+
+# Objective Function: Minimize Total Wage Expenses
+
+$$ MIN \hspace{0.3mm} Z = 775X_1 + 800X_2 + 800X_3 + 800X_4 + 800X_5 + 775X_6 + 750X_7$$
+```{r}
+IP <- make.lp(0, 7)
+lp.control(IP, sense="min", verbose = "neutral") 
+```
+
+```{r}
+set.objfn(IP, c(775,800,800,800,800,775,750))
+```
+
+Constraints:
+
+Sunday:- $$ X_2 + X_3 + X_4 + X_5 + X_6 \ge 18 $$
+Monday:- $$ X_3 + X_4 + X_5 + X_6 + X_7 \ge 27 $$
+Tuesday:-$$ X_4 + X_5 + X_6 + X_7 + X_1 \ge 22 $$
+Wednesday:-$$ X_5 + X_6 + X_7+ X_1 + X_2 \ge 26 $$
+Thursday:-$$ X_6 + X_7 + X_1 + X_2 + X_3 \ge 25 $$
+Friday:-$$ X_7 + X_1 + X_2 + X_3 + X_4 \ge 21 $$
+Saturday:-$$X_1 + X_2 + X_3 + X_4 + X_5 \ge 19 $$
+Non-negative integers \(X_i\)
+$$X_i \ge 0 , i = 1,2,3,4,5,6,7$$
+```{r}
+add.constraint(IP, c(0,1,1,1,1,1,0), ">=", 18)
+add.constraint(IP, c(0,0,1,1,1,1,1), ">=", 27)
+add.constraint(IP, c(1,0,0,1,1,1,1), ">=", 22)
+add.constraint(IP, c(1,1,0,0,1,1,1), ">=", 26)
+add.constraint(IP, c(1,1,1,0,0,1,1), ">=", 25)
+add.constraint(IP, c(1,1,1,1,0,0,1), ">=", 21)
+add.constraint(IP, c(1,1,1,1,1,0,0), ">=", 19)
+```
+
+
+```{r}
+set.type(IP,1:7,"integer")
+RowNames <- c("Sun,Mon", "Mon,Tue", "Tue,Wed", "Wed,Thu", "Thu,Fri", "Fri,Sat", "Sat,Sun")
+ColNames <- c("x1", "x2","x3","x4","X5","X6","X7")
+dimnames(IP) <- list(RowNames, ColNames)
+IP
+```
+
+```{r}
+solve(IP)
+```
+
+# What was the total cost?
+```{r}
+get.objective(IP)
+cat("The minimum total wage expanse is $", get.objective(IP), "\n")
+```
+
+# How many workers are available each day?
+```{r}
+get.variables(IP)
+
+cat("Total numbers of workers available on Sunday is", sum(get.variables(IP)[c(2,3,4,5,6)]), "\n")
+cat("Total numbers of workers available on Monday is", sum(get.variables(IP)[c(3,4,5,6,7)]), "\n")
+cat("Total numbers of workers available on Tuesday is", sum(get.variables(IP)[c(4,5,6,7,1)]), "\n")
+cat("Total numbers of workers available on Wednesday is", sum(get.variables(IP)[c(5,6,7,1,2)]), "\n")
+cat("Total numbers of workers available on Thursday is", sum(get.variables(IP)[c(6,7,1,2,3)]), "\n")
+cat("Total numbers of workers available on Friday is", sum(get.variables(IP)[c(7,1,2,3,4)]), "\n")
+cat("Total numbers of workers available on Saturday is", sum(get.variables(IP)[c(1,2,3,4,5)]), "\n")
+```
